@@ -1,4 +1,4 @@
-import { registerAs } from '@nestjs/config';
+import { registerAs } from "@nestjs/config";
 
 export interface AppConfigI {
   PORT: number;
@@ -6,9 +6,9 @@ export interface AppConfigI {
 }
 
 export const appConfig = registerAs<AppConfigI>(
-  'app',
+  "app",
   (): AppConfigI => ({
     PORT: +(process.env.PORT || 3000),
-    BOT_TOKEN: process.env.BOT_TOKEN || 'not_found',
+    BOT_TOKEN: process.env.BOT_TOKEN || "not_found",
   }),
 );

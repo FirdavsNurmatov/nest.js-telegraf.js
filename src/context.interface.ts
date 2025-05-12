@@ -1,7 +1,7 @@
-import { Context as ContextTelegraf } from 'telegraf';
+import { Context as ContextTelegraf } from "telegraf";
 
 export interface Context extends ContextTelegraf {
   session: {
-    type?: 'done' | 'edit' | 'delete';
+    type?: "done" | "edit" | "delete";
   };
 }

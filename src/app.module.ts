@@ -1,12 +1,12 @@
-import { Module } from '@nestjs/common';
-import { AppUpdate } from './app.update';
-import { AppService } from './app.service';
-import { TelegrafModule } from 'nestjs-telegraf';
-import * as LocalSession from 'telegraf-session-local';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { appConfig } from './config/config';
+import { Module } from "@nestjs/common";
+import { AppUpdate } from "./app.update";
+import { AppService } from "./app.service";
+import { TelegrafModule } from "nestjs-telegraf";
+import * as LocalSession from "telegraf-session-local";
+import { ConfigModule } from "@nestjs/config";
+import { appConfig } from "./config/config";
 
-const sessions = new LocalSession({ database: 'session_db.json' });
+const sessions = new LocalSession({ database: "session_db.json" });
 
 @Module({
   imports: [
@@ -17,7 +17,7 @@ const sessions = new LocalSession({ database: 'session_db.json' });
     }),
     TelegrafModule.forRoot({
       middlewares: [sessions.middleware()],
-      token: process.env.BOT_TOKEN || '',
+      token: process.env.BOT_TOKEN || "",
     }),
     // TelegrafModule.forRootAsync({
     //   imports: [ConfigModule],
