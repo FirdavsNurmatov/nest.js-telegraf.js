@@ -29,7 +29,8 @@ export class AppUpdate {
 
   @Hears("Topshiriqlar to'plami 📋")
   async getAllTodos(ctx: Context) {
-    const todos = await this.appService.getAllTodos();
+    const userId = `${ctx.from?.id}`;
+    const todos = await this.appService.getAllTodos(userId);
 
     if (!todos.length) {
       await ctx.reply("Hali hech qanday topshiriq mavjud emas");
@@ -71,10 +72,18 @@ export class AppUpdate {
       return;
     }
 
+    const userId = `${ctx.from?.id}`;
     if (ctx.session.type === "create") {
-      const todo = await this.appService.createTodo(message);
+      const todo = await this.appService.createTodo({
+        message: message,
+        user_id: userId,
+      });
     } else if (ctx.session.type === "done") {
-      const todo = await this.appService.doneTodo(+message);
+      if (isNaN(+message)) {
+        await ctx.reply("Noto'g'ri ID format");
+        return;
+      }
+      const todo = await this.appService.doneTodo(+message, userId);
 
       if (!todo) {
         await ctx.reply("Bunday ID ga ega topshiriq mavjud emas!");
@@ -84,21 +93,32 @@ export class AppUpdate {
       todo.isCompleted = true;
     } else if (ctx.session.type === "edit") {
       const data = message.split(" | ");
-      const todo = await this.appService.editTodo(+data[0], data[1]);
+      if (isNaN(+data[0])) {
+        await ctx.reply("Noto'g'ri ID format");
+        return;
+      }
+
+      const todo = await this.appService.editTodo(+data[0], data[1], userId);
 
       if (!todo) {
         await ctx.reply("Bunday ID ga ega topshiriq mavjud emas!");
         return;
       }
     } else if (ctx.session.type === "delete") {
-      const todo = await this.appService.deleteTodo(+message);
+      if (isNaN(+message)) {
+        await ctx.reply("Noto'g'ri ID format");
+        return;
+      }
+
+      const todo = await this.appService.deleteTodo(+message, userId);
 
       if (!todo) {
         await ctx.reply("Bunday ID ga ega topshiriq mavjud emas!");
         return;
       }
     }
-    const todos = await this.appService.getAllTodos();
+    const todos = await this.appService.getAllTodos(userId);
     await ctx.reply(showList(todos));
+    ctx.session.type = "none";
   }
 }
