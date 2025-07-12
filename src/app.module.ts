@@ -5,6 +5,8 @@ import { TelegrafModule } from "nestjs-telegraf";
 import * as LocalSession from "telegraf-session-local";
 import { ConfigModule } from "@nestjs/config";
 import { appConfig } from "./config/config";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { TodoEntity } from "./todo.entity";
 
 const sessions = new LocalSession({ database: "session_db.json" });
 
@@ -19,15 +21,19 @@ const sessions = new LocalSession({ database: "session_db.json" });
       middlewares: [sessions.middleware()],
       token: process.env.BOT_TOKEN || "",
     }),
-    // TelegrafModule.forRootAsync({
-    //   imports: [ConfigModule],
-    //   useFactory: async (configService: ConfigService) => ({
-    //     token: configService.get<string>('app.BOT_TOKEN'),
-    //     middlewares: [sessions.middleware()],
-    //   }),
-    //   inject: [ConfigService],
-    // }),
+    TypeOrmModule.forRoot({
+      type: "postgres",
+      host: "localhost",
+      port: 5432,
+      username: "postgres",
+      password: "postgres",
+      database: "tg_bot",
+      entities: [TodoEntity],
+      synchronize: true,
+    }),
+    TypeOrmModule.forFeature([TodoEntity]),
   ],
+
   providers: [AppService, AppUpdate],
 })
 export class AppModule {}

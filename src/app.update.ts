@@ -11,38 +11,35 @@ import { Telegraf } from "telegraf";
 import { actionButtons } from "./app.buttons";
 import { Context } from "./context.interface";
 import { showList } from "./app.utils";
-
-let todos = [
-  {
-    id: 1,
-    name: "Buy car",
-    isCompleted: false,
-  },
-  {
-    id: 2,
-    name: "Buy food",
-    isCompleted: true,
-  },
-  {
-    id: 3,
-    name: "sell toys",
-    isCompleted: false,
-  },
-];
+import { AppService } from "./app.service";
 
 @Update()
 export class AppUpdate {
-  constructor(@InjectBot() private readonly bot: Telegraf<Context>) {}
+  constructor(
+    @InjectBot() private readonly bot: Telegraf<Context>,
+    private readonly appService: AppService,
+  ) {}
 
   @Start()
   async startCommand(ctx: Context) {
     await ctx.reply("Assalomu alaykum! 👋");
     await ctx.reply("Xo'sh, nima qilishni xohlaysiz?", actionButtons());
+    ctx.session.type = "none";
   }
 
   @Hears("Topshiriqlar to'plami 📋")
   async getAllTodos(ctx: Context) {
-    await ctx.reply(showList(todos));
+    const todos = await this.appService.getAllTodos();
+
+    if (!todos.length) {
+      await ctx.reply("Hali hech qanday topshiriq mavjud emas");
+    } else await ctx.reply(showList(todos));
+  }
+
+  @Hears("Yaratish 📝")
+  async createTodo(ctx: Context) {
+    await ctx.replyWithHTML("Topshiriq nomini yuboring: ");
+    ctx.session.type = "create";
   }
 
   @Hears("Yakunlash ✅")
@@ -54,7 +51,7 @@ export class AppUpdate {
   @Hears("O'zgartirish ✏️")
   async editTodo(ctx: Context) {
     await ctx.replyWithHTML(
-      "Topshiriq ID si va yangi topshiriqni namunadagidek yuboring: \n\n" +
+      "Topshiriq ID va yangi nomni namunadagidek yuboring: \n\n" +
         "Namuna: <b>1 | topshiriq nomi</b>",
     );
     ctx.session.type = "edit";
@@ -68,10 +65,16 @@ export class AppUpdate {
 
   @On("text")
   async getTodoId(@Message("text") message: string, @Ctx() ctx: Context) {
-    if (!ctx.session.type) return;
+    if (ctx.session.type === "none") {
+      await ctx.reply("Assalomu alaykum! 👋");
+      await ctx.reply("Xo'sh, nima qilishni xohlaysiz?", actionButtons());
+      return;
+    }
 
-    if (ctx.session.type === "done") {
-      const todo = todos.find((t) => t.id === +message);
+    if (ctx.session.type === "create") {
+      const todo = await this.appService.createTodo(message);
+    } else if (ctx.session.type === "done") {
+      const todo = await this.appService.doneTodo(+message);
 
       if (!todo) {
         await ctx.reply("Bunday ID ga ega topshiriq mavjud emas!");
@@ -79,32 +82,23 @@ export class AppUpdate {
       }
 
       todo.isCompleted = true;
-      await ctx.reply(showList(todos));
-    }
-
-    if (ctx.session.type === "edit") {
+    } else if (ctx.session.type === "edit") {
       const data = message.split(" | ");
-      const todo = todos.find((t) => t.id === +data[0]);
+      const todo = await this.appService.editTodo(+data[0], data[1]);
 
       if (!todo) {
         await ctx.reply("Bunday ID ga ega topshiriq mavjud emas!");
         return;
       }
-
-      todo.name = data[1];
-      await ctx.reply(showList(todos));
-    }
-
-    if (ctx.session.type === "delete") {
-      const todo = todos.find((t) => t.id === +message);
+    } else if (ctx.session.type === "delete") {
+      const todo = await this.appService.deleteTodo(+message);
 
       if (!todo) {
         await ctx.reply("Bunday ID ga ega topshiriq mavjud emas!");
         return;
       }
-
-      todos = todos.filter((todo) => (todo.id !== +message ? todo : null));
-      await ctx.reply(showList(todos));
     }
+    const todos = await this.appService.getAllTodos();
+    await ctx.reply(showList(todos));
   }
 }
