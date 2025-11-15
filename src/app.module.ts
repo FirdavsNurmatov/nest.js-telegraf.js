@@ -46,7 +46,7 @@ const sessions = new LocalSession({ database: "session_db.json" });
       host: "localhost",
       port: 5432,
       username: "postgres",
-      password: "root",
+      password: "postgres",
       database: "tg_bot",
       entities: [TodoEntity],
       synchronize: false,
