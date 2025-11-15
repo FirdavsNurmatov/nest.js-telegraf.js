@@ -6,12 +6,18 @@ import rateLimit from "express-rate-limit";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(helmet());
-  app.use(
-    rateLimit({
-      windowMs: 60 * 1000,
-      max: 60,
-    }),
-  );
-  await app.listen(process.env.PORT || 3000);
+  // app.use(
+  //   rateLimit({
+  //     windowMs: 60 * 1000,
+  //     max: 60,
+  //   }),
+  // );
+
+  app.init()
+
+  const port = process.env.PORT || 3000;
+  await app.listen(port, () => {
+    console.log(`Server running on port: ${port}`);
+  });
 }
 bootstrap();

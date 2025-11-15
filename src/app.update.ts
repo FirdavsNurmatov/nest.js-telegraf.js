@@ -1,4 +1,5 @@
 import {
+  Command,
   Ctx,
   Hears,
   InjectBot,
@@ -12,13 +13,34 @@ import { actionButtons } from "./app.buttons";
 import { Context } from "./context.interface";
 import { showList } from "./app.utils";
 import { AppService } from "./app.service";
+import { ConfigService } from "@nestjs/config";
 
 @Update()
 export class AppUpdate {
   constructor(
     @InjectBot() private readonly bot: Telegraf<Context>,
     private readonly appService: AppService,
+    private readonly config: ConfigService,
   ) {}
+
+  @Command("notify")
+  async sendNotification(@Ctx() ctx: Context) {
+    const ADMIN_ID = this.config.get("ADMIN_ID");
+    if (`${ctx.from?.id}` !== ADMIN_ID) {
+      await ctx.reply("❌ Sizda ruxsat yo‘q.");
+      return;
+    }
+
+    const allUsers = await this.appService.getAllUsers();
+    for (const data of allUsers) {
+      await this.bot.telegram.sendMessage(
+        +data.user_id,
+        "📢 Yangilik: habarnoma testi!",
+      );
+    }
+
+    await ctx.reply(`✅ ${allUsers.length} ta foydalanuvchiga xabar yuborildi`);
+  }
 
   @Start()
   async startCommand(ctx: Context) {

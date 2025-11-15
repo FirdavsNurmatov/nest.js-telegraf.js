@@ -10,6 +10,10 @@ export class AppService {
     private readonly todoRepository: Repository<TodoEntity>,
   ) {}
 
+  async getAllUsers() {
+    return await this.todoRepository.find({ select: { user_id: true } });
+  }
+
   async getAllTodos(user_id: string) {
     return await this.todoRepository.find({
       where: { user_id: user_id },

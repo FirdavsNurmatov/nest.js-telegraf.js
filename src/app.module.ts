@@ -3,7 +3,7 @@ import { AppUpdate } from "./app.update";
 import { AppService } from "./app.service";
 import { TelegrafModule } from "nestjs-telegraf";
 import * as LocalSession from "telegraf-session-local";
-import { ConfigModule } from "@nestjs/config";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { appConfig } from "./config/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { TodoEntity } from "./todo.entity";
@@ -17,19 +17,39 @@ const sessions = new LocalSession({ database: "session_db.json" });
       expandVariables: true,
       load: [appConfig],
     }),
-    TelegrafModule.forRoot({
-      middlewares: [sessions.middleware()],
-      token: process.env.BOT_TOKEN || "",
+    TelegrafModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const token = configService.get<string>("BOT_TOKEN");
+        if (!token) throw new Error("BOT_TOKEN is not defined in .env");
+
+        const domain = configService.get<string>("WEBHOOK_DOMAIN");
+        console.log(domain);
+        
+        if (!domain) throw new Error("WEBHOOK_DOMAIN is not defined in .env");
+
+        return {
+          token,
+          middlewares: [sessions.middleware()],
+          launchOptions: {
+            webhook: {
+              domain,
+              hookPath: "/webhook",
+            },
+          },
+        };
+      },
     }),
     TypeOrmModule.forRoot({
       type: "postgres",
       host: "localhost",
       port: 5432,
       username: "postgres",
-      password: "postgres",
+      password: "root",
       database: "tg_bot",
       entities: [TodoEntity],
-      synchronize: true,
+      synchronize: false,
     }),
     TypeOrmModule.forFeature([TodoEntity]),
   ],
