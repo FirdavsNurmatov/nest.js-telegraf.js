@@ -7,6 +7,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { appConfig } from "./config/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { TodoEntity } from "./todo.entity";
+import { AppController } from "./app.controller";
 
 const sessions = new LocalSession({ database: "session_db.json" });
 
@@ -26,7 +27,7 @@ const sessions = new LocalSession({ database: "session_db.json" });
 
         const domain = configService.get<string>("WEBHOOK_DOMAIN");
         console.log(domain);
-        
+
         if (!domain) throw new Error("WEBHOOK_DOMAIN is not defined in .env");
 
         return {
@@ -53,7 +54,7 @@ const sessions = new LocalSession({ database: "session_db.json" });
     }),
     TypeOrmModule.forFeature([TodoEntity]),
   ],
-
+  controllers: [AppController],
   providers: [AppService, AppUpdate],
 })
 export class AppModule {}
